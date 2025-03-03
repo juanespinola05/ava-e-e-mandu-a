@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,25 @@ export default function VocabTrainer() {
   const [words, setWords] = useState<Array<{ word: string; translation: string }>>([]);
   const [currentWord, setCurrentWord] = useState<{ word: string; translation: string }>();
   const [showTranslation, setShowTranslation] = useState(false);
+  const [lastUsedWords, setLastUsedWords] = useState<string[]>([]);
+  
+  
+  const pickRandomWord = (wordList: Array<{ word: string; translation: string }>) => {
+    if (wordList.length > 0) {
+      if (lastUsedWords.length === wordList.length) {
+        setLastUsedWords([]);
+      }
+      const randomIndex = Math.floor(Math.random() * wordList.length);
+      const word = wordList[randomIndex];
+      if (lastUsedWords.includes(word.word)) {
+        pickRandomWord(wordList);
+      } else {
+        setCurrentWord(word);
+        setShowTranslation(false);
+        setLastUsedWords([...lastUsedWords, word.word]);
+      }
+    }
+  };
 
   useEffect(() => {
     mapWords().then(data => {
@@ -17,16 +37,8 @@ export default function VocabTrainer() {
         pickRandomWord(data);
       }
     })
-  }, []);
-
-  const pickRandomWord = (wordList: Array<{ word: string; translation: string }>) => {
-    if (wordList.length > 0) {
-      const randomIndex = Math.floor(Math.random() * wordList.length);
-      setCurrentWord(wordList[randomIndex]);
-      setShowTranslation(false);
-    }
-  };
-
+  }, [])
+  
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="flex gap-2 justify-center py-6">
@@ -52,6 +64,9 @@ export default function VocabTrainer() {
             Siguiente
           </Button>
         </div>
+      </div>
+      <div>
+        <a className="underline" target="_blank" href='https://docs.google.com/spreadsheets/d/1juFn3CCdxG9MeNhg6Ale8t6SIxByVQoRCnuEjzKccGM/edit?gid=0#gid=0'>Revisar listado</a>
       </div>
     </div>
   );
