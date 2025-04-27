@@ -3,33 +3,53 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { mapWords } from "@/spreadsheets/utils";
+import { LANGUAGES, Language, TEXTS } from "@/utils/constants";
 
 export default function VocabTrainer() {
+  const [language, setLanguage] = useState<Language>(LANGUAGES.GUARANI);
+  
   const [words, setWords] = useState<Array<{ word: string; translation: string }>>([]);
   const [currentWord, setCurrentWord] = useState<{ word: string; translation: string }>();
   const [showTranslation, setShowTranslation] = useState(false);
   const [lastUsedWords, setLastUsedWords] = useState<string[]>([]);
   
-  
   const pickRandomWord = (wordList: Array<{ word: string; translation: string }>) => {
     if (wordList.length > 0) {
-      if (lastUsedWords.length === wordList.length) {
+      let availableWords = [...wordList];
+      let currentLastUsed = [...lastUsedWords];
+
+      if (currentLastUsed.length >= wordList.length) {
+        currentLastUsed = [];
         setLastUsedWords([]);
       }
-      const randomIndex = Math.floor(Math.random() * wordList.length);
-      const word = wordList[randomIndex];
-      if (lastUsedWords.includes(word.word)) {
-        pickRandomWord(wordList);
-      } else {
-        setCurrentWord(word);
-        setShowTranslation(false);
-        setLastUsedWords([...lastUsedWords, word.word]);
+
+      availableWords = availableWords.filter(word => !currentLastUsed.includes(word.word));
+      
+      if (availableWords.length === 0) {
+        availableWords = [...wordList];
+        currentLastUsed = [];
+        setLastUsedWords([]);
       }
+
+      const randomIndex = Math.floor(Math.random() * availableWords.length);
+      const word = availableWords[randomIndex];
+      
+      setCurrentWord(word);
+      setShowTranslation(false);
+      setLastUsedWords([...currentLastUsed, word.word]);
     }
   };
 
+  const changeLanguage = () => {
+    setWords([]);
+    setCurrentWord(undefined);
+    setShowTranslation(false);
+    setLastUsedWords([]);
+    setLanguage(language === LANGUAGES.GUARANI ? LANGUAGES.CROATIAN : LANGUAGES.GUARANI);
+  }
+
   useEffect(() => {
-    mapWords().then(data => {
+    mapWords(language).then(data => {
       if (!data || data.length === 0) {
         alert('No se encontraron palabras')
       } else {
@@ -37,13 +57,15 @@ export default function VocabTrainer() {
         pickRandomWord(data);
       }
     })
-  }, [])
+  }, [language])
   
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="flex gap-2 justify-center py-6">
-        <h1 className="text-xl text-center">Avañe'e Mandu'a</h1>
-        <img src="https://i.imgur.com/YwAodoO.png" alt="Avañe e Mandu a" className="w-6" />
+        <h1 className="text-xl text-center">
+          {TEXTS[language].TITLE}
+        </h1>
+        <img src={TEXTS[language].IMAGE_URL} alt={TEXTS[language].TITLE} className="w-6" />
       </div>
       <div className="flex flex-col items-center justify-center p-4">
         <Card className="p-6 w-80 text-center h-96 flex items-center justify-center">
@@ -59,14 +81,20 @@ export default function VocabTrainer() {
           </CardContent>
         </Card>
         <div className="py-6 w-80">
-          <Button className="w-full p-2 bg-[#e31b1b]" onClick={() => setShowTranslation(true)}>Revelar</Button>
+          <Button className="w-full p-2 bg-[#e31b1b]" onClick={() => setShowTranslation(true)}>{TEXTS[language].BUTTON_TEXT}</Button>
           <Button className="w-full p-2 mt-2 bg-blue-600 text-white" onClick={() => pickRandomWord(words)} variant="outline">
-            Siguiente
+            {TEXTS[language].NEXT_BUTTON_TEXT}
           </Button>
         </div>
       </div>
-      <div>
-        <a className="underline" target="_blank" href='https://docs.google.com/spreadsheets/d/1juFn3CCdxG9MeNhg6Ale8t6SIxByVQoRCnuEjzKccGM/edit?gid=0#gid=0'>Revisar listado</a>
+      <div className="flex flex-col gap-2 items-center">
+        <a className="underline" target="_blank" href={TEXTS[language].CHECK_LIST_URL}>Revisar listado</a>
+        <button
+          className="underline"
+          onClick={changeLanguage}
+        >
+          Cambiar a {language === LANGUAGES.GUARANI ? 'Croata' : 'Guaraní'}
+        </button>
       </div>
     </div>
   );

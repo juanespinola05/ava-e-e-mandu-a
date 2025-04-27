@@ -1,13 +1,13 @@
 import { WORDS_FILE_URL } from "@/utils/constants"
 
-export async function mapWords () {
+export async function mapWords (language: 'GUARANI' | 'CROATIAN') {
   try {
-    const response = await fetch(WORDS_FILE_URL)
+    const response = await fetch(WORDS_FILE_URL[language])
     const data = await response.text() as string
     const rows = data.split('\n').map(row => row.split(',').map(cell => cell.replace(/\r/g, '').trim()))
 
     const headers = rows[0]
-    const wordIndex = headers.map(header => header.toLowerCase()).indexOf('guaraní')
+    const wordIndex = headers.map(header => header.toLowerCase()).indexOf('idioma')
     const translationIndex = headers.map(header => header.toLowerCase()).indexOf('traducción')
     if (wordIndex === -1) {
       return []
